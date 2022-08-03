@@ -19,17 +19,18 @@ At present, this project will only work for binary classification.
 The confusion matrix layout is as follows:
     
 ``` 
-         Predicted
-           Class
-       -------------
-      |      |      |
-      |  TP  |  FN  |
-      |      |      |
-True   -------------
-Class |      |      |
-      |  FP  |  TN  |
-      |      |      |
-       -------------
+             Predicted
+               Class
+              0      1
+           -------------
+          |      |      |
+       0  |  TP  |  FN  |
+          |      |      |
+True       -------------
+Class     |      |      |
+       1  |  FP  |  TN  |
+          |      |      |
+           -------------
  
 ```
 

@@ -16,6 +16,23 @@ Any confusion matrix that meets the specified requirements is saved and outputte
 
 At present, this project will only work for binary classification.
 
+The confusion matrix layout is as follows:
+    
+``` 
+         Predicted
+           Class
+       -------------
+      |      |      |
+      |  TP  |  FN  |
+      |      |      |
+True   -------------
+Class |      |      |
+      |  FP  |  TN  |
+      |      |      |
+       -------------
+ 
+```
+
 ## Getting Started
 
 todo

@@ -1,6 +1,30 @@
 # Reverse Engineer Confusion Matrix
 Reverse Engineer confusion matrices from a variety of generated metrics.
 
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li>
+        <a href="#usage">Usage</a>
+        <ul>
+            <li><a href="#python">Python</a></li>
+        </ul>
+    </li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+  </ol>
+</details>
+
 ## About the Project
 
 This repository houses a project that will extract all possible confusion matrices that correspond to particular output metrics for a given dataset size.
@@ -54,9 +78,9 @@ git clone https://github.com/Sam-Pewton/reverse_engineer_confusion_matrix
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-### Usage
+## Usage
 
-#### Python
+### Python
 
 IDE:
 1. Open `./python/reverse_engineer.py` in your IDE

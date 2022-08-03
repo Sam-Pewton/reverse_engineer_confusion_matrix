@@ -66,7 +66,7 @@ Terminal:
 1. Open `./python/reverse_engineer.py` in a text editor of your choice
 2. Modify lines 35:44 with your required parameters. If you do not wish to use an optional parameter, <b>set it to -1</b>.
 3. Open the terminal to the location of the file.
-4. Execute `python reverse_engineer.py`. If any matches are made, the output is exported to `./data/output.csv`
+4. Execute `python reverse_engineer.py` in the terminal window. If any matches are made, the output is exported to `./data/output.csv`
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

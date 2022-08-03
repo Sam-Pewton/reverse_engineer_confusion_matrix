@@ -54,12 +54,15 @@ Terminal:
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ### Contributing
-If you have a suggestion that would enhance this project, please fork the repo and create a pull request from your feature branch. 
+If you have a suggestion that would enhance this project, please fork the repo and create a pull request from your feature branch.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/your_new_feature`)
 3. Commit your Changes (`git commit -m 'what you did and why'`)
 4. Push to the Branch (`git push origin feature/your_new_feature`)
 5. Open a Pull Request
+
+### License
+Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>

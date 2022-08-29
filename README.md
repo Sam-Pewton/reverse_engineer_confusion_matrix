@@ -38,6 +38,8 @@ The metrics that are available to use are:
 
 Any confusion matrix that meets the specified requirements is saved and outputted to `./data/output.csv`. Please note that this file is overwritten on each run, if you would like to save the results generated, please copy and rename the file you wish to keep.
 
+The fastest version of the program is the C++ version.
+
 At present, this project will only work for binary classification.
 
 The confusion matrix layout is as follows:
@@ -64,9 +66,13 @@ How to set up and run the project.
 
 ### Prerequisites
 
+#### Python
 * [Python 3.*](https://www.python.org/downloads/)
 * [pandas](https://pandas.pydata.org/docs/getting_started/install.html)
 * Text Editor/IDE
+
+#### C++
+* g++ compiler (or any alternative)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -92,6 +98,15 @@ Terminal:
 2. Modify lines 35:44 with your required parameters. If you do not wish to use an optional parameter, <b>set it to -1</b>.
 3. Open the terminal to the location of the file.
 4. Execute `python reverse_engineer.py` in the terminal window. If any matches are made, the output is exported to `./data/output.csv`
+
+### C++
+
+Terminal:
+1. Open `./cpp/reverse_engineer.cpp` in a text editor of your choice
+2. Modify lines  with your required parameters. If you do not wish to use an optional parameters, <b>set it to -1</b>.
+3. Open the terminal to the location of the file.
+4. Compile the program with `g++ -o ./reverse_engineer reverse_engineer.cpp`
+5. Execute the program with `./reverse_engineer` in the terminal window. If any matches are made, the output is exported to `./data/cpp_output.csv`
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

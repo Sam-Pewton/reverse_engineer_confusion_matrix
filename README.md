@@ -103,7 +103,7 @@ Terminal:
 
 Terminal:
 1. Open `./cpp/reverse_engineer.cpp` in a text editor of your choice
-2. Modify lines  with your required parameters. If you do not wish to use an optional parameters, <b>set it to -1</b>.
+2. Modify lines 31:40 with your required parameters. If you do not wish to use an optional parameters, <b>set it to -1</b>.
 3. Open the terminal to the location of the file.
 4. Compile the program with `g++ -o ./reverse_engineer reverse_engineer.cpp`
 5. Execute the program with `./reverse_engineer` in the terminal window. If any matches are made, the output is exported to `./data/cpp_output.csv`

@@ -26,6 +26,7 @@ Author
 Sam Pewton
 """
 import pandas as pd
+import math
 
 def main():
     """Main method
@@ -389,8 +390,11 @@ def convert_specified_dp(number : float, decimal_places : int):
     float
         the rounded number
     """
-    formatter = "%" + ".%df" % decimal_places
-    return float(formatter % number)
+    multiplier = pow(10, decimal_places)
+    lhs = math.floor(number * multiplier)
+    rhs = (number * multiplier) % 1
+    rhs = math.floor(rhs) if rhs < 0.5 else math.ceil(rhs)
+    return (lhs + rhs) / multiplier
 
 def export_to_csv(matrices : list,
                   target_accuracy : float,

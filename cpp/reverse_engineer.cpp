@@ -13,18 +13,19 @@
 #include <fstream>
 #include <cstdio>
 
-void reverse_engineer_confusion_matrices(int,int,int,
-		double,double,double,double,double);
-int * find_positives_vs_negatives(int,double,int);
+void reverse_engineer_confusion_matrices(int, int, int,
+		double, double, double, double, double);
+int * find_positives_vs_negatives(int, double, int);
 double round_dp(double,int);
-std::vector<std::array<int, 4>> find_matrices(int, int, int *);
-std::vector<std::array<int, 4>> check_metric(std::vector<std::array<int, 4>>,
-		double, int, std::string);
-void export_to_csv(std::vector<std::array<int, 4>>, double,double,double,double,
-		double);
+void find_matrices(int, int, int *, double, double,
+		double, double, double, int);
+bool check_metric(double, double, double, double, double, double, double,
+		double, int);
 
 /**
  * Main method
+ *
+ * Adjust the values in the modifiers to your target
  */
 int main(){
 	////////////// MODIFIERS//////////////
@@ -40,6 +41,7 @@ int main(){
 	const double TARGET_PRECISION = 0.71;
 	//////////////////////////////////////
 
+	// Assertions..
 	assert(DECIMAL_PLACES >= 0);
 	assert(CLASS_A_COUNT && CLASS_B_COUNT > 0);
 	assert(TARGET_ACCURACY >= 0 && TARGET_ACCURACY <= 1);
@@ -51,6 +53,7 @@ int main(){
 	assert((TARGET_PRECISION >= 0 && TARGET_PRECISION <= 1) ||
 			TARGET_PRECISION == -1);
 
+	// Trigger main workload
 	reverse_engineer_confusion_matrices(
 			CLASS_A_COUNT,
 			CLASS_B_COUNT,
@@ -107,80 +110,54 @@ void reverse_engineer_confusion_matrices(
 		exit(0);
 	}
 
-	// Calculate each of the matrices that are possible - use vectors?
-	std::vector<std::array<int,4>> matrices = find_matrices(class_a_count,
-			class_b_count, min_max_values);
-
-	if (target_sensitivity != -1)
-		matrices = check_metric(matrices, target_sensitivity, decimal_places,
-				"sensitivity");
-	if (target_specificity != -1)
-		matrices = check_metric(matrices, target_specificity, decimal_places,
-				"specificity");
-	if (target_f1 != -1)
-		matrices = check_metric(matrices, target_f1, decimal_places, "f1");
-	if (target_precision != -1)
-		matrices = check_metric(matrices, target_precision, decimal_places,
-				"precision");
-
-	std::cout << matrices.size() << " different matrices fit the criteria.";
-	std::cout << "\nExporting data to ../data/cpp_output.csv" << std::endl;
-
-	// Export to .csv file.
-	export_to_csv(matrices, target_accuracy, target_sensitivity,
-			target_specificity, target_f1, target_precision);
+	// Calculate each of the matrices that are possible
+	find_matrices(class_a_count, class_b_count, min_max_values,
+			target_accuracy, target_sensitivity, target_specificity, target_f1,
+			target_precision, decimal_places);
 }
 
 /**
- * check_metric - check a particular metric against each of the supplied
- * matrices to determine if it is possible.
+ * check_metric - check the current state of the confusion matrix against all
+ * of the target values.
  *
  * Parameters
- *   std::vector<std::array<int, 4>> - all of the current matrices
- *   double - target value to achieve
- *   int - number of decimal places to round to
- *   std::string - metric to check
+ *   double - casted double version of TP for more mathematical accuracy
+ *   double - casted double version of FN for more mathematical accuracy
+ *   double - casted double version of FP for more mathematical accuracy
+ *   double - casted double version of TN for more mathematical accuracy
+ *   double - the target sensitivity
+ *   double - the target specificity
+ *   double - the target f1 score
+ *   double - the target precision
+ *   int - the number of decimal places to round to
  *
  * Returns
- *   std::vector<std::array<int, 4>> - all matrices that achieve the target
+ *   bool - if the criteria is met or not
  */
-std::vector<std::array<int,4>> check_metric(
-		std::vector<std::array<int,4>> matrices,
-		double target_value,
-		int decimal_places,
-		std::string metric_name
+bool check_metric(
+		double TP,
+		double FN,
+		double FP,
+		double TN,
+		double target_sensitivity,
+		double target_specificity,
+		double target_f1,
+		double target_precision,
+		int decimal_places
 		)
 {
-	std::vector<std::array<int,4>> new_matrices;
+	bool meets_criteria = true;
 
-	for (int i = 0; i < matrices.size(); i++)
-	{
-		double TP = (double)matrices[i][0];
-		double FN = (double)matrices[i][1];
-		double FP = (double)matrices[i][2];
-		double TN = (double)matrices[i][3];
-		double result;
-
-		// Calculate the required metric.
-		if (metric_name == "sensitivity")
-			result = round_dp(TP/(TP+FN), decimal_places);
-		else if (metric_name == "specificity")
-			result = round_dp(TN/(TN+FP), decimal_places);
-		else if (metric_name == "f1")
-			result = round_dp(2*TP/(2*TP+FP+FN), decimal_places);
-		else if (metric_name == "precision")
-			result = round_dp(TP/(TP+FP), decimal_places);
-		else
-		{
-			std::cout << "Unknown metric, exiting." << std::endl;
-			exit(0);
-		}
-
-		// Append the matrix if it achieves the correct result.
-		if (result == target_value)
-			new_matrices.push_back({(int)TP,(int)FN,(int)FP,(int)TN});
-	}
-	return new_matrices;
+	// Cycle through each of the metrics, calc and check against the targets
+	if (round_dp(TP/(TP+FN), decimal_places) != target_sensitivity || target_sensitivity == -1)
+		meets_criteria = false;
+	if (round_dp(TN/(TN+FP), decimal_places) != target_specificity || target_specificity == -1)
+		meets_criteria = false;
+	if (round_dp(2*TP/(2*TP+FP+FN), decimal_places) != target_f1 || target_f1 == -1)
+		meets_criteria = false;
+	if (round_dp(TP/(TP+FP), decimal_places) != target_precision || target_precision == -1)
+		meets_criteria = false;
+	return meets_criteria;
 }
 
 /**
@@ -190,15 +167,23 @@ std::vector<std::array<int,4>> check_metric(
  *   int - count of items in class A
  *   int - count of items in class B
  *   int * - the pointer to the min/max values array
- *
- * Returns
- *   std::vector<std::array<int,4>> - the matrices that fit the accuracy
- *     criteria
+ *   double - the target accuracy
+ *   double - the target sensitivity
+ *   double - the target specificity
+ *   double - the target f1 score
+ *   double - the target precision
+ *   int - the number of decimal places to round to
  */
-std::vector<std::array<int, 4>> find_matrices(
+void find_matrices(
 		int class_a_count,
 		int class_b_count,
-		int * min_max_values
+		int * min_max_values,
+		double target_accuracy,
+		double target_sensitivity,
+		double target_specificity,
+		double target_f1,
+		double target_precision,
+		int decimal_places
 		)
 {
 	// Calculate the total number of combinations.
@@ -206,8 +191,12 @@ std::vector<std::array<int, 4>> find_matrices(
 	if (*(min_max_values + 2) != -1)
 		combinations = *(min_max_values) - *(min_max_values + 2) + 1;
 
+	std::ofstream file;
+	file.open("../data/cpp_output2.csv");
+	file << "TP,FN,FP,TN,Accuracy,Sensitivity,Specificity,F1,Precision,\n";
+
 	// Calculate and store the matrices.
-	std::vector<std::array<int,4>> matrices;
+	//std::vector<std::array<int,4>> matrices;
 	for (int i = 0; i < combinations; i++)
 	{
 		// Base matrix
@@ -217,7 +206,18 @@ std::vector<std::array<int, 4>> find_matrices(
 		int FN = class_a_count - TP;
 		int FP = *(min_max_values + 1) + i - FN;
 		int TN = class_b_count - FP;
-		matrices.push_back({TP,FN,FP,TN});
+
+		if (check_metric((double)TP,(double)FN,(double)FP,(double)TN,
+					target_sensitivity, target_specificity, target_f1, target_precision,
+					decimal_places))
+		{
+			file << TP << "," << FN << "," << FP << "," << TN << ",";
+			file << target_accuracy << ",";
+			file << target_sensitivity << ",";
+			file << target_specificity << ",";
+			file << target_f1 << ",";
+			file << target_precision << ",\n";
+		}
 
 		while (TP > 0 && TN < class_b_count)
 		{
@@ -225,10 +225,21 @@ std::vector<std::array<int, 4>> find_matrices(
 			++FN;
 			--FP;
 			++TN;
-			matrices.push_back({TP,FN,FP,TN});
+
+			if (check_metric((double)TP,(double)FN,(double)FP,(double)TN,
+						target_sensitivity, target_specificity, target_f1, target_precision,
+						decimal_places))
+			{
+				file << TP << "," << FN << "," << FP << "," << TN << ",";
+				file << target_accuracy << ",";
+				file << target_sensitivity << ",";
+				file << target_specificity << ",";
+				file << target_f1 << ",";
+				file << target_precision << ",\n";
+			}
 		}
 	}
-	return matrices;
+	file.close();
 }
 
 /**
@@ -288,47 +299,8 @@ int * find_positives_vs_negatives(
  * Returns
  *   double - the rounded number
  */
-double round_dp(double number, int decimal_places) {
+double round_dp(double number, int decimal_places)
+{
 	double modifier = pow(10.0f, (double)decimal_places);
 	return round(number * modifier) / modifier;
-}
-
-/**
- * export_to_csv - export the data to a .csv file.
- *
- * Parameters
- *   std::vector<std::array<int,4>> - the matrices to save
- *   double - the target accuracy
- *   double - the target sensitivity
- *   double - the target specificity
- *   double - the target f1 score
- *   double - the target precision
- *
- * Returns
- *   None.
- */
-void export_to_csv(std::vector<std::array<int,4>> matrices,
-		double target_accuracy,
-		double target_sensitivity,
-		double target_specificity,
-		double target_f1,
-		double target_precision
-		)
-{
-	std::ofstream file;
-	file.open("../data/cpp_output.csv");
-	file << "TP,FN,FP,TN,Accuracy,Sensitivity,Specificity,F1,Precision,\n";
-	for (int i = 0; i < matrices.size(); i++)
-	{
-		file << matrices[i][0] << ",";
-		file << matrices[i][1] << ",";
-		file << matrices[i][2] << ",";
-		file << matrices[i][1] << ",";
-		file << target_accuracy << ",";
-		file << target_sensitivity << ",";
-		file << target_specificity << ",";
-		file << target_f1 << ",";
-		file << target_precision << ",\n";
-	}
-	file.close();
 }

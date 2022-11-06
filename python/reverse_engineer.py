@@ -25,7 +25,7 @@ Author
 ------
 Sam Pewton
 """
-import pandas as pd
+import csv
 import math
 
 def main():
@@ -97,186 +97,25 @@ def reverse_engineer_confusion_matrices(class_a_count : int,
     total_sample_size = class_a_count + class_b_count
 
     # Find minimum and maximum correct and incorrect predictions.
-    # c = correct, i = incorrect. a|b values partner together.
-    c_a, i_a, c_b, i_b = find_positives_vs_negatives(total_sample_size,
-                                                     target_accuracy,
-                                                     decimal_places)
+    min_max_values = find_positives_vs_negatives(total_sample_size,
+                                                 target_accuracy,
+                                                 decimal_places)
 
     # No combinations can achieve the accuracy..
-    if c_a == -1:
+    if min_max_values[0] == -1:
         print("There are no combinations that can achieve this accuracy.")
         exit()
 
-    # Get all matrices matching the accuracies
-    matrices = find_matrices(class_a_count,
-                             class_b_count,
-                             c_a,
-                             i_a,
-                             c_b,
-                             i_b)
-
-    if target_sensitivity >= 0 or target_sensitivity <= 1:
-        matrices = check_sensitivity(matrices,
-                                     target_sensitivity,
-                                     decimal_places)
-
-    if target_specificity >= 0 or target_specificity <= 1:
-        matrices = check_specificity(matrices,
-                                     target_specificity,
-                                     decimal_places)
-
-    if target_f1 >= 0 or target_f1 <= 1:
-        matrices = check_f1(matrices, target_f1, decimal_places)
-
-    if target_precision >= 0 or target_precision <= 1:
-        matrices = check_precision(matrices, target_precision, decimal_places)
-
-    if len(matrices) == 0:
-        print("There are no combinations meeting this criteria.")
-        exit()
-
-    print(str(len(matrices)), "different matrices fit the criteria." \
-            "\nExporting data to ../data/output.csv")
-    export_to_csv(matrices,
+    # Trigger the workload
+    find_matrices(class_a_count,
+                  class_b_count,
+                  min_max_values,
                   target_accuracy,
                   target_sensitivity,
                   target_specificity,
                   target_f1,
-                  target_precision)
-
-def check_precision(matrices, target_precision, decimal_places):
-    """Check the precision score of all matrices for a given target.
-
-    Any matrices not meeting the target are removed.
-
-    Parameters
-    ----------
-    matrices : list
-        all current matrices
-    target_precision : float
-        the target precision to achieve
-    decimal_places : int
-        the number of decimal places to round to
-
-    Returns
-    -------
-    list
-        list of matrices matching the target precision.
-    """
-    new_matrices = []
-
-    for matrix in matrices:
-        TP = matrix[0][0]
-        FN = matrix[0][1]
-        FP = matrix[1][0]
-        TN = matrix[1][1]
-        precision = convert_specified_dp(TP/(TP+FP), decimal_places)
-        if precision == target_precision:
-            new_matrices.append(matrix)
-
-    return new_matrices
-
-def check_f1(matrices : list, target_f1 : float, decimal_places : int):
-    """Check the f1 score of all matrices for a given target.
-
-    Any matrices not meeting the target are removed.
-
-    Parameters
-    ----------
-    matrices : list
-        all current matrices
-    target_f1 : float
-        the target precision to achieve
-    decimal_places : int
-        the number of decimal places to round to
-
-    Returns
-    -------
-    list
-        list of matrices matching the target f1 score.
-    """
-    new_matrices = []
-
-    for matrix in matrices:
-        TP = matrix[0][0]
-        FN = matrix[0][1]
-        FP = matrix[1][0]
-        TN = matrix[1][1]
-        f1 = convert_specified_dp(2*TP/(2*TP+FP+FN), decimal_places)
-
-
-        if f1 == target_f1:
-            new_matrices.append(matrix)
-
-    return new_matrices
-
-def check_sensitivity(matrices : list,
-                      target_sensitivity : float,
-                      decimal_places : int):
-    """Check the sensitivity (TPR) of all matrices for a given target.
-
-    Any matrices not meeting the target are removed.
-
-    Parameters
-    ----------
-    matrices : list
-        all current matrices
-    target_sensitivity : float
-        the target precision to achieve
-    decimal_places : int
-        the number of decimal places to round to
-
-    Returns
-    -------
-    list
-        list of matrices matching the target sensitifity score.
-    """
-    new_matrices = []
-
-    for matrix in matrices:
-        TP = matrix[0][0]
-        FN = matrix[0][1]
-        FP = matrix[1][0]
-        TN = matrix[1][1]
-        sensitivity = convert_specified_dp(TP/(TP+FN), decimal_places)
-
-        if sensitivity == target_sensitivity:
-            new_matrices.append(matrix)
-
-    return new_matrices
-
-def check_specificity(matrices, target_specificity, decimal_places):
-    """Check the specificity (TNR) of all matrices for a given target.
-
-    Any matrices not meeting the target are removed.
-
-    Parameters
-    ----------
-    matrices : list
-        all current matrices
-    target_specificity : float
-        the target precision to achieve
-    decimal_places : int
-        the number of decimal places to round to
-
-    Returns
-    -------
-    list
-        list of matrices matching the target sensitifity score.
-    """
-    new_matrices = []
-
-    for matrix in matrices:
-        TP = matrix[0][0]
-        FN = matrix[0][1]
-        FP = matrix[1][0]
-        TN = matrix[1][1]
-        specificity = convert_specified_dp(TN/(TN+FP), decimal_places)
-
-        if specificity == target_specificity:
-            new_matrices.append(matrix)
-
-    return new_matrices
+                  target_precision,
+                  decimal_places)
 
 def find_positives_vs_negatives(total_sample_size : int,
                                 target_accuracy : float,
@@ -323,15 +162,19 @@ def find_positives_vs_negatives(total_sample_size : int,
                 correct_b = correct_preds
                 incorrect_b = incorrect_preds
 
-    return correct_a, incorrect_a, correct_b, incorrect_b
+    return [correct_a, incorrect_a, correct_b, incorrect_b]
 
 def find_matrices(class_a_count : int,
                   class_b_count : int,
-                  correct_a : int,
-                  incorrect_a : int,
-                  correct_b : int,
-                  incorrect_b : int):
-    """Extract all of the matrices that fit the accuracy criteria
+                  min_max_values : list,
+                  target_accuracy : float,
+                  target_sensitivity : float,
+                  target_specificity : float,
+                  target_f1 : float,
+                  target_precision : float,
+                  decimal_places : int):
+    """Extract all of the matrices that fit the accuracy criteria and stream
+    into a .csv file called output_python.csv in the data folder of the project
 
     Parameters
     ----------
@@ -339,40 +182,100 @@ def find_matrices(class_a_count : int,
         count of items in class a
     class_b_count : int
         count of items in class b
-    correct_a : int
-        highest number of correct predictions, groups with incorrect_a
-    incorrect_a : int
-        lowest number of incorrect predictions, groups with correct_a
-    correct_b : int
-        lowest number of correct predictions, groups with incorrect_b
-    incorrect_b : int
-        highest number of incorrect predictions, groups with correct_b
+    min_max_values : list
+        min max combination values
+    target_accuracy : float
+        target accuracy value
+    target_sensitivity : float
+        target sensitivity value
+    target_specificity : float
+        target specificity value
+    target_f1 : float
+        target f1 value
+    target_precision : float
+        target precision value
+    decimal_places : int
+        decimal places to round to
 
     Returns
     -------
     list
         list of all possible matrices ([[TP, FN],[FP, TN]])
     """
-    matrices = []
-    number_of_combinations = correct_a - correct_b + 1 if correct_b != -1 else 1
+    number_of_combinations = min_max_values[0] - min_max_values[2] + 1 if min_max_values[2] != -1 else 1
 
-    # Get all matrices for all combinations
-    for i in range(number_of_combinations):
-        # Base matrix
-        TP = correct_a - i if correct_a-i < class_a_count else class_a_count - i
-        FN = class_a_count - TP
-        FP = incorrect_a + i - FN
-        TN = class_b_count - FP
-        matrices.append([[TP,FN],[FP,TN]])
+    # Stream data into .csv file as its calculated
+    with open("../data/output_python.csv", "w", newline="\n") as f:
+        writer = csv.writer(f, delimiter=',')
+        writer.writerow(["TP","FN","FP","TN","Accuracy","Sensitivity","Specificity","F1","Precision","\n"])
 
-        while TP > 0 and TN < class_b_count:
-            TP -= 1
-            FN += 1
-            FP -= 1
-            TN += 1
-            matrices.append([[TP,FN],[FP,TN]])
+        # Get all matrices for all combinations
+        for i in range(number_of_combinations):
+            # Base matrix
+            TP = min_max_values[0] - i if min_max_values[0]-i < class_a_count else class_a_count - i
+            FN = class_a_count - TP
+            FP = min_max_values[1] + i - FN
+            TN = class_b_count - FP
 
-    return matrices
+            if check_metric(TP,FN,FP,TN, target_sensitivity, target_specificity, target_f1, target_precision, decimal_places):
+                writer.writerow([str(TP), str(FN), str(FP), str(TN), str(target_accuracy), str(target_sensitivity), str(target_specificity), str(target_f1), str(target_precision),"\n"])
+
+            while TP > 0 and TN < class_b_count:
+                TP -= 1
+                FN += 1
+                FP -= 1
+                TN += 1
+                if check_metric(TP,FN,FP,TN, target_sensitivity, target_specificity, target_f1, target_precision, decimal_places):
+                    writer.writerow([str(TP), str(FN), str(FP), str(TN), str(target_accuracy), str(target_sensitivity), str(target_specificity), str(target_f1), str(target_precision),"\n"])
+
+def check_metric(TP : float,
+                 FN : float,
+                 FP : float,
+                 TN : float,
+                 target_sensitivity : float,
+                 target_specificity : float,
+                 target_f1 : float,
+                 target_precision : float,
+                 decimal_places : int):
+    """Check the matrix against all of the metric criteria
+
+    Parameters
+    ----------
+    TP : float
+        TP value
+    FN : float
+        FN value
+    FP : float
+        FP value
+    TN : float
+        TN value
+    target_sensitivity : float
+        target sensitivity value
+    target_specificity : float
+        target specificity value
+    target_f1 : float
+        target f1 value
+    target_precision : float
+        target precision value
+    decimal_places : int
+        decimal places to round to
+
+    Returns
+    -------
+    bool
+        if the criteria is met or not
+    """
+    meets_criteria = True
+
+    if convert_specified_dp(TP/(TP+FN), decimal_places) != target_sensitivity or target_sensitivity == -1:
+        meets_criteria = False
+    if convert_specified_dp(TN/(TN+FP), decimal_places) != target_specificity or target_specificity == -1:
+        meets_criteria = False
+    if convert_specified_dp(2*TP/(2*TP+FP+FN), decimal_places) != target_f1 or target_f1 == -1:
+        meets_criteria = False
+    if convert_specified_dp(TP/(TP+FP), decimal_places) != target_precision or target_precision == -1:
+        meets_criteria = False
+    return meets_criteria
 
 def convert_specified_dp(number : float, decimal_places : int):
     """Round off a floating point number to a specified amount of decimal
@@ -395,60 +298,6 @@ def convert_specified_dp(number : float, decimal_places : int):
     rhs = (number * multiplier) % 1
     rhs = math.floor(rhs) if rhs < 0.5 else math.ceil(rhs)
     return (lhs + rhs) / multiplier
-
-def export_to_csv(matrices : list,
-                  target_accuracy : float,
-                  target_sensitivity : float,
-                  target_specificity : float,
-                  target_f1 : float,
-                  target_precision : float):
-    """Export all located matrices to output csv.
-
-    Output csv file is located in the data folder of the project.
-
-    Parameters
-    ----------
-    matrices : list
-        all located matrices
-    target_accuracy : float
-        the target accuracy
-    target_sensitivity : float
-        the target sensitivity
-    target_specificity : float
-        the target specificity
-    target_f1 : float
-        the target f1 score
-    target_precision : float
-        the target precision
-
-    Returns
-    -------
-    None.
-    """
-    data = {
-            "TP" : [],
-            "FN" : [],
-            "FP" : [],
-            "TN" : [],
-            "Accuracy" : [],
-            "Sensitivity" : [],
-            "Specificity" : [],
-            "F1" : [],
-            "Precision" : []
-           }
-
-    for matrix in matrices:
-        data["TP"].append(matrix[0][0])
-        data["FN"].append(matrix[0][1])
-        data["FP"].append(matrix[1][0])
-        data["TN"].append(matrix[1][1])
-        data["Accuracy"].append(target_accuracy)
-        data["Sensitivity"].append(target_sensitivity)
-        data["Specificity"].append(target_specificity)
-        data["F1"].append(target_f1)
-        data["Precision"].append(target_precision)
-
-    pd.DataFrame.from_dict(data).to_csv("../data/output.csv")
 
 if __name__ == "__main__":
     main()

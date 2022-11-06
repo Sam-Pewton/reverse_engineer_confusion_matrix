@@ -68,7 +68,6 @@ How to set up and run the project.
 
 #### Python
 * [Python 3.*](https://www.python.org/downloads/)
-* [pandas](https://pandas.pydata.org/docs/getting_started/install.html)
 * Text Editor/IDE
 
 #### C++
